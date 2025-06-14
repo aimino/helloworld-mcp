@@ -1,0 +1,19 @@
+{
+  "name": "helloworld-mcp",
+  "version": "1.0.0",
+  "description": "A simple MCP server that returns 'Hello, World'",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": ["mcp", "server", "hello-world"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "bin": {
+    "helloworld-mcp": "./server.js"
+  }
+}
