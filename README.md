@@ -1,11 +1,12 @@
-# Hello World MCP Server
+# Hello World Remote MCP Server
 
-「Hello, World」を返すシンプルなローカルMCPサーバーの実装です。標準入出力（stdio）トランスポートを使用します。
+「Hello, World」を返すシンプルなリモートMCPサーバーの実装です。HTTP + Server-Sent Events (SSE) トランスポートを使用します。
 
 ## 機能
 
 - **helloツール**: 「Hello, World」メッセージを返すシンプルなツール
-- **Stdioトランスポート**: 標準入出力を使用したローカル実行
+- **HTTPトランスポート**: Server-Sent Events (SSE) を使用したリモート通信
+- **CORS対応**: クロスオリジンリクエストをサポート
 
 ## インストール
 
@@ -19,18 +20,81 @@ npm install
 npm start
 ```
 
-このサーバーは標準入出力で動作するため、直接実行しても対話的な出力は表示されません。MCPクライアント（Claude Code など）から呼び出されることを想定しています。
+サーバーは `http://localhost:8787` で起動します。
 
-## Claude Code設定
+- Health check: `http://localhost:8787/health`
+- SSE endpoint: `http://localhost:8787/sse`
+- Message endpoint: `http://localhost:8787/message`
 
-Claude Codeの設定ファイル（`claude_desktop_config.json`）に以下の設定を追加してください：
+## 環境変数
 
+- `PORT`: サーバーのポート番号（デフォルト: 8787）
+
+## Claude Desktop設定
+
+Claude Desktopの設定ファイル（`claude_desktop_config.json`）に以下のいずれかの設定を追加してください：
+
+### 方法1: mcp-remoteパッケージを使用（推奨）
+
+**ローカル実行の場合:**
 ```json
 {
   "mcpServers": {
-    "helloworld-mcp": {
-      "command": "node",
-      "args": ["/path/to/your/helloworld-mcp/server.js"]
+    "helloworld-mcp-remote": {
+      "command": "npx",
+      "args": [
+        "mcp-remote",
+        "http://localhost:8787/sse",
+        "--allow-http"
+      ]
+    }
+  }
+}
+```
+
+**WSLから接続する場合（Windows環境）:**
+```json
+{
+  "mcpServers": {
+    "helloworld-mcp-remote": {
+      "command": "npx",
+      "args": [
+        "mcp-remote",
+        "http://172.17.244.162:8787/sse",
+        "--allow-http"
+      ]
+    }
+  }
+}
+```
+
+> **注意**: WSLのIPアドレスは再起動時に変更される可能性があります。`ip addr show eth0` で現在のIPアドレスを確認してください。
+
+### 方法2: 直接SSE接続を使用
+
+**ローカル実行の場合:**
+```json
+{
+  "mcpServers": {
+    "helloworld-mcp-remote": {
+      "transport": {
+        "type": "sse",
+        "url": "http://localhost:8787/sse"
+      }
+    }
+  }
+}
+```
+
+**WSLから接続する場合（Windows環境）:**
+```json
+{
+  "mcpServers": {
+    "helloworld-mcp-remote": {
+      "transport": {
+        "type": "sse",
+        "url": "http://172.17.244.162:8787/sse"
+      }
     }
   }
 }
@@ -65,13 +129,19 @@ MCPクライアントから `hello` ツールを呼び出すと、以下のレ�
 }
 ```
 
+### エンドポイント
+
+- `GET /health` - サーバーの状態確認
+- `GET /sse` - SSE接続の確立
+- `POST /message` - MCPメッセージの処理
+
 ## 開発
 
-このサーバーは Model Context Protocol (MCP) の仕様に準拠したローカルサーバーの実装例です。Claude CodeやClaude Desktopなどのローカル開発環境で使用できます。
+このサーバーは Model Context Protocol (MCP) の仕様に準拠したリモートサーバーの実装例です。Claude DesktopやClaude Codeなどのリモート環境で使用できます。
 
 ### ファイル構成
 
-- `server.js` - Stdio ベースのMCPサーバー
+- `server.js` - HTTP + SSE ベースのリモートMCPサーバー
 - `package.json` - プロジェクト設定と依存関係
 
 ### 拡張方法
